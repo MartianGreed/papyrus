@@ -17,6 +17,7 @@ use jsonrpsee::http_server::types::error::CallError;
 use jsonrpsee::http_server::{HttpServerBuilder, HttpServerHandle};
 use jsonrpsee::types::error::ErrorCode::InternalError;
 use jsonrpsee::types::error::{ErrorObject, INTERNAL_ERROR_MSG};
+use papyrus_config::{Config, Configurable, ParamMetadata, ParamPath, ParamValue};
 use papyrus_storage::body::events::{EventIndex, EventsReader};
 use papyrus_storage::body::{BodyStorageReader, TransactionIndex};
 use papyrus_storage::db::TransactionKind;
@@ -50,6 +51,68 @@ pub struct GatewayConfig {
     pub server_address: String,
     pub max_events_chunk_size: usize,
     pub max_events_keys: usize,
+}
+
+impl Configurable for GatewayConfig {
+    fn new(built: &Config) -> Self {
+        Self {
+            chain_id: ChainId(built.get("gateway.chain_id", "should have chain_id").into()),
+            server_address: built
+                .get("gateway.server_address", "should have server_address")
+                .into(),
+            max_events_chunk_size: built
+                .get("gateway.max_events_chunk_size", "should have max_events_chunk_size")
+                .into(),
+            max_events_keys: built
+                .get("gateway.max_events_keys", "should have max_events_keys")
+                .into(),
+        }
+    }
+
+    fn dump(&self) -> Vec<(ParamPath, ParamValue, ParamMetadata)> {
+        vec![
+            (
+                "gateway.chain_id".to_owned(),
+                ParamValue::String(self.chain_id.to_string()),
+                ParamMetadata::new(
+                    "--chain-id".to_owned(),
+                    None,
+                    "Starknet main chain_id".to_owned(),
+                    None,
+                ),
+            ),
+            (
+                "gateway.server_address".to_owned(),
+                ParamValue::String(self.server_address.clone()),
+                ParamMetadata::new(
+                    "--gateway-server-address".to_owned(),
+                    None,
+                    "Node server bind address".to_owned(),
+                    None,
+                ),
+            ),
+            (
+                "gateway.max_events_chunk_size".to_owned(),
+                ParamValue::Usize(self.max_events_chunk_size),
+                ParamMetadata::new(
+                    "--gateway-max-events-chunk-size".to_owned(),
+                    None,
+                    "Node max events chunk size".to_owned(),
+                    None,
+                ),
+            ),
+            (
+                "gateway.max_events_keys".to_owned(),
+                ParamValue::Usize(self.max_events_keys),
+                ParamMetadata::new(
+                    "--gateway-max-events-keys".to_owned(),
+                    None,
+                    "Node max events keys".to_owned(),
+                    None,
+                ),
+            ),
+        ]
+    }
 }
 
 /// Rpc server.

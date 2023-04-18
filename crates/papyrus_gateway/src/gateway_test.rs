@@ -10,13 +10,14 @@ use jsonrpsee::http_server::types::error::CallError;
 use jsonrpsee::types::error::ErrorObject;
 use jsonrpsee::types::EmptyParams;
 use jsonschema::JSONSchema;
+use papyrus_config::{Config, Configurable, ConfigurationBuilder};
 use papyrus_storage::body::events::EventIndex;
 use papyrus_storage::body::{BodyStorageWriter, TransactionIndex};
 use papyrus_storage::header::HeaderStorageWriter;
 use papyrus_storage::state::StateStorageWriter;
 use papyrus_storage::test_utils::get_test_storage;
 use starknet_api::block::{BlockHash, BlockHeader, BlockNumber, BlockStatus};
-use starknet_api::core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ChainId, ClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::StateDiff;
 use starknet_api::transaction::{
@@ -41,7 +42,25 @@ use crate::transaction::{
     Event, TransactionOutput, TransactionReceipt, TransactionReceiptWithStatus, TransactionStatus,
     TransactionWithType, Transactions,
 };
-use crate::{run_server, ContinuationTokenAsStruct};
+use crate::{run_server, ContinuationTokenAsStruct, GatewayConfig};
+
+#[test]
+fn test_config() {
+    let config = get_built_configuration();
+
+    let gateway_config = GatewayConfig::new(&config);
+
+    assert_eq!(ChainId("SN_MAIN".to_owned()), gateway_config.chain_id);
+    assert_eq!("0.0.0.0:8000", &gateway_config.server_address);
+}
+
+fn get_built_configuration() -> Config {
+    ConfigurationBuilder::apply_default()
+        .apply_config_file()
+        .apply_env()
+        .apply_command_line()
+        .build()
+}
 
 #[tokio::test]
 async fn block_number() {
