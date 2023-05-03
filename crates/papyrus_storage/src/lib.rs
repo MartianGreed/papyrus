@@ -12,11 +12,13 @@ mod version;
 pub mod test_utils;
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use body::events::EventIndex;
 use db::DbTableStats;
 use ommer::{OmmerEventKey, OmmerTransactionKey};
+use papyrus_config::{Configurable, ParamMetadata, ParamValue};
 use serde::{Deserialize, Serialize};
 use starknet_api::block::{BlockHash, BlockHeader, BlockNumber};
 use starknet_api::core::{ClassHash, ContractAddress, Nonce};
@@ -263,6 +265,67 @@ pub type StorageResult<V> = std::result::Result<V, StorageError>;
 #[derive(Serialize, Deserialize, Clone)]
 pub struct StorageConfig {
     pub db_config: DbConfig,
+}
+
+impl Configurable for StorageConfig {
+    fn new(built: &papyrus_config::Config) -> Self {
+        Self {
+            db_config: DbConfig {
+                path: built.get("storage.db.path").into(),
+                min_size: built.get("storage.db.min_size").into(),
+                max_size: built.get("storage.db.max_size").into(),
+                growth_step: built.get("storage.db.growth_step").into(),
+            },
+        }
+    }
+
+    fn dump(
+        &self,
+    ) -> Vec<(papyrus_config::ParamPath, papyrus_config::ParamValue, papyrus_config::ParamMetadata)>
+    {
+        vec![
+            (
+                "storage.db.path".to_owned(),
+                ParamValue::PathBuf(self.db_config.path.clone()),
+                ParamMetadata::new(
+                    "--storage-db-path".to_owned(),
+                    None,
+                    "Database storage path".to_owned(),
+                    Some(ParamValue::PathBuf(PathBuf::from("./data"))),
+                ),
+            ),
+            (
+                "storage.db.min_size".to_owned(),
+                ParamValue::PathBuf(self.db_config.path.clone()),
+                ParamMetadata::new(
+                    "--storage-db-min-size".to_owned(),
+                    None,
+                    "Database storage min size".to_owned(),
+                    Some(ParamValue::Usize(1 << 20)), // 1 MB
+                ),
+            ),
+            (
+                "storage.db.max_size".to_owned(),
+                ParamValue::PathBuf(self.db_config.path.clone()),
+                ParamMetadata::new(
+                    "--storage-db-max-size".to_owned(),
+                    None,
+                    "Database storage max size".to_owned(),
+                    Some(ParamValue::Usize(1 << 40)), // 1 TB
+                ),
+            ),
+            (
+                "storage.db.growth_step".to_owned(),
+                ParamValue::PathBuf(self.db_config.path.clone()),
+                ParamMetadata::new(
+                    "--storage-db-growth-step".to_owned(),
+                    None,
+                    "Database storage growth step".to_owned(),
+                    Some(ParamValue::Usize(1 << 26)), // 64 MB
+                ),
+            ),
+        ]
+    }
 }
 
 /// A mapping from a table name in the database to its statistics.

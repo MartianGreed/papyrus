@@ -30,3 +30,8 @@ central.max_retries = 10
 /// Monitoring Gateway
 monitoring_gateway.server_address = 0.0.0.0:8081
 
+/// Storage
+storage.db.path = ./data
+storage.db.min_size = 1048576 
+storage.db.max_size = 1099511627776
+storage.db.growth_step = 67108864

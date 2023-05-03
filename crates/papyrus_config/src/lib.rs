@@ -7,6 +7,8 @@ pub enum ParamValue {
     Usize(usize),
     U64(u64),
     OptionnalStringToStringHashMap(Option<HashMap<String, String>>),
+    PathBuf(std::path::PathBuf),
+    Isize(isize),
 }
 impl Default for ParamValue {
     fn default() -> Self {
@@ -18,10 +20,13 @@ impl From<ParamValue> for String {
         match value {
             ParamValue::String(s) => s,
             ParamValue::Usize(u) => u.to_string(),
+            ParamValue::Isize(i) => i.to_string(),
             ParamValue::U64(u) => u.to_string(),
-            ParamValue::OptionnalStringToStringHashMap(_) => {
-                panic!("can't do proper conversion there.")
-            }
+            ParamValue::PathBuf(pb) => match pb.to_str() {
+                None => panic!("can't do proper conversion there."),
+                Some(s) => String::from(s),
+            },
+            _ => panic!("can't do proper conversion there."),
         }
     }
 }
@@ -32,10 +37,7 @@ impl From<ParamValue> for usize {
                 usize::from_str_radix(&s, 10).expect("should be able to convert to usize")
             }
             ParamValue::Usize(u) => u,
-            ParamValue::U64(_) => panic!("can't do proper conversion there."),
-            ParamValue::OptionnalStringToStringHashMap(_) => {
-                panic!("can't do proper conversion there.")
-            }
+            _ => panic!("can't do proper conversion there."),
         }
     }
 }
@@ -45,11 +47,8 @@ impl From<ParamValue> for u64 {
             ParamValue::String(s) => {
                 u64::from_str_radix(&s, 10).expect("should be able to convert to u64")
             }
-            ParamValue::Usize(_) => panic!("can't do proper conversion there."),
             ParamValue::U64(u) => u,
-            ParamValue::OptionnalStringToStringHashMap(_) => {
-                panic!("can't do proper conversion there.")
-            }
+            _ => panic!("can't do proper conversion there."),
         }
     }
 }
@@ -61,6 +60,23 @@ impl From<ParamValue> for Option<HashMap<String, String>> {
                 Err(_) => None,
                 Ok(hm) => Some(hm),
             },
+            _ => panic!("conversion is not available"),
+        }
+    }
+}
+impl From<ParamValue> for std::path::PathBuf {
+    fn from(value: ParamValue) -> Self {
+        match value {
+            ParamValue::String(s) => std::path::PathBuf::from(s),
+            ParamValue::PathBuf(pb) => pb,
+            _ => panic!("conversion is not available"),
+        }
+    }
+}
+impl From<ParamValue> for isize {
+    fn from(value: ParamValue) -> Self {
+        match value {
+            ParamValue::Isize(i) => i,
             _ => panic!("conversion is not available"),
         }
     }
