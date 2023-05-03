@@ -4,6 +4,7 @@ use assert_matches::assert_matches;
 use futures_util::pin_mut;
 use indexmap::IndexMap;
 use mockall::predicate;
+use papyrus_config::{Config, Configurable, ConfigurationBuilder};
 use papyrus_storage::test_utils::get_test_storage;
 use reqwest::StatusCode;
 use starknet_api::block::{BlockHash, BlockNumber};
@@ -19,8 +20,30 @@ use starknet_client::{
 use tokio_stream::StreamExt;
 
 use crate::sources::central::{CentralError, CentralSourceTrait, GenericCentralSource};
+use crate::CentralSourceConfig;
 
 const TEST_CONCURRENT_REQUESTS: usize = 300;
+
+#[test]
+fn test_config() {
+    let config = get_built_configuration();
+
+    let central_config = CentralSourceConfig::new(&config);
+
+    assert_eq!(100, central_config.concurrent_requests);
+    assert_eq!("https://alpha-mainnet.starknet.io/", &central_config.url);
+    assert_eq!(30, central_config.retry_config.retry_base_millis);
+    assert_eq!(30000, central_config.retry_config.retry_max_delay_millis);
+    assert_eq!(10, central_config.retry_config.max_retries);
+}
+
+fn get_built_configuration() -> Config {
+    ConfigurationBuilder::apply_default()
+        .apply_config_file()
+        .apply_env()
+        .apply_command_line()
+        .build()
+}
 
 #[tokio::test]
 async fn last_block_number() {

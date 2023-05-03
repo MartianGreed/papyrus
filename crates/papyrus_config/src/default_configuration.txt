@@ -18,3 +18,11 @@ gateway.server_address = 0.0.0.0:8000
 gateway.max_events_chunk_size = 1000
 gateway.max_events_keys = 10
 
+/// Central
+central.concurrent_requests = 100
+central.url = https://alpha-mainnet.starknet.io/
+central.http_headers = {}
+central.retry_base_millis = 30
+central.retry_max_delay_millis = 30000
+central.max_retries = 10
+

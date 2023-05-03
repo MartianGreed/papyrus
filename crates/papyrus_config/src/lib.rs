@@ -5,6 +5,8 @@ pub type ParamPath = String;
 pub enum ParamValue {
     String(String),
     Usize(usize),
+    U64(u64),
+    OptionnalStringToStringHashMap(Option<HashMap<String, String>>),
 }
 impl Default for ParamValue {
     fn default() -> Self {
@@ -16,6 +18,10 @@ impl From<ParamValue> for String {
         match value {
             ParamValue::String(s) => s,
             ParamValue::Usize(u) => u.to_string(),
+            ParamValue::U64(u) => u.to_string(),
+            ParamValue::OptionnalStringToStringHashMap(_) => {
+                panic!("can't do proper conversion there.")
+            }
         }
     }
 }
@@ -26,6 +32,36 @@ impl From<ParamValue> for usize {
                 usize::from_str_radix(&s, 10).expect("should be able to convert to usize")
             }
             ParamValue::Usize(u) => u,
+            ParamValue::U64(_) => panic!("can't do proper conversion there."),
+            ParamValue::OptionnalStringToStringHashMap(_) => {
+                panic!("can't do proper conversion there.")
+            }
+        }
+    }
+}
+impl From<ParamValue> for u64 {
+    fn from(value: ParamValue) -> Self {
+        match value {
+            ParamValue::String(s) => {
+                u64::from_str_radix(&s, 10).expect("should be able to convert to u64")
+            }
+            ParamValue::Usize(_) => panic!("can't do proper conversion there."),
+            ParamValue::U64(u) => u,
+            ParamValue::OptionnalStringToStringHashMap(_) => {
+                panic!("can't do proper conversion there.")
+            }
+        }
+    }
+}
+impl From<ParamValue> for Option<HashMap<String, String>> {
+    fn from(value: ParamValue) -> Self {
+        match value {
+            ParamValue::OptionnalStringToStringHashMap(hm) => hm,
+            ParamValue::String(s) => match serde_json::from_str(&s) {
+                Err(_) => None,
+                Ok(hm) => Some(hm),
+            },
+            _ => panic!("conversion is not available"),
         }
     }
 }
@@ -75,8 +111,8 @@ impl Config {
     /// let value: usize = config.get("gateway.max_events_chunk_size", "should have
     /// max_events_chunk_size").into();
     /// ```
-    pub fn get(&self, path: &str, message: &str) -> ParamValue {
-        self.configuration.get(path).expect(message).to_owned()
+    pub fn get(&self, path: &str) -> ParamValue {
+        self.configuration.get(path).expect(&format!("{path} should be configured")).to_owned()
     }
 }
 

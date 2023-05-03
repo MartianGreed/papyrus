@@ -56,16 +56,10 @@ pub struct GatewayConfig {
 impl Configurable for GatewayConfig {
     fn new(built: &Config) -> Self {
         Self {
-            chain_id: ChainId(built.get("gateway.chain_id", "should have chain_id").into()),
-            server_address: built
-                .get("gateway.server_address", "should have server_address")
-                .into(),
-            max_events_chunk_size: built
-                .get("gateway.max_events_chunk_size", "should have max_events_chunk_size")
-                .into(),
-            max_events_keys: built
-                .get("gateway.max_events_keys", "should have max_events_keys")
-                .into(),
+            chain_id: ChainId(built.get("gateway.chain_id").into()),
+            server_address: built.get("gateway.server_address").into(),
+            max_events_chunk_size: built.get("gateway.max_events_chunk_size").into(),
+            max_events_keys: built.get("gateway.max_events_keys").into(),
         }
     }
 
