@@ -26,3 +26,7 @@ central.retry_base_millis = 30
 central.retry_max_delay_millis = 30000
 central.max_retries = 10
 
+
+/// Monitoring Gateway
+monitoring_gateway.server_address = 0.0.0.0:8081
+
