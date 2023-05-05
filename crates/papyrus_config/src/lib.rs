@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 pub type ParamPath = String;
 #[derive(Debug, Clone)]
@@ -6,9 +6,11 @@ pub enum ParamValue {
     String(String),
     Usize(usize),
     U64(u64),
+    U32(u32),
     OptionnalStringToStringHashMap(Option<HashMap<String, String>>),
     PathBuf(std::path::PathBuf),
     Isize(isize),
+    Duration(Duration),
 }
 impl Default for ParamValue {
     fn default() -> Self {
@@ -26,6 +28,7 @@ impl From<ParamValue> for String {
                 None => panic!("can't do proper conversion there."),
                 Some(s) => String::from(s),
             },
+            ParamValue::Duration(d) => d.as_secs().to_string(),
             _ => panic!("can't do proper conversion there."),
         }
     }
@@ -48,6 +51,17 @@ impl From<ParamValue> for u64 {
                 u64::from_str_radix(&s, 10).expect("should be able to convert to u64")
             }
             ParamValue::U64(u) => u,
+            _ => panic!("can't do proper conversion there."),
+        }
+    }
+}
+impl From<ParamValue> for u32 {
+    fn from(value: ParamValue) -> Self {
+        match value {
+            ParamValue::String(s) => {
+                u32::from_str_radix(&s, 10).expect("should be able to convert to u32")
+            }
+            ParamValue::U32(u) => u,
             _ => panic!("can't do proper conversion there."),
         }
     }
@@ -77,6 +91,21 @@ impl From<ParamValue> for isize {
     fn from(value: ParamValue) -> Self {
         match value {
             ParamValue::Isize(i) => i,
+            _ => panic!("conversion is not available"),
+        }
+    }
+}
+impl From<ParamValue> for std::time::Duration {
+    fn from(value: ParamValue) -> Self {
+        match value {
+            ParamValue::Duration(d) => d,
+            ParamValue::U64(u) => Duration::from_secs(u),
+            ParamValue::Usize(u) => {
+                Duration::from_secs(u.try_into().expect("should be convertible to u64"))
+            }
+            ParamValue::String(s) => Duration::from_secs(
+                u64::from_str_radix(&s, 10).expect("should be convertible to u64"),
+            ),
             _ => panic!("conversion is not available"),
         }
     }
@@ -118,14 +147,15 @@ impl Config {
     /// # Examples
     ///
     ///  ```
+    ///  use papyrus_config::ConfigurationBuilder;
+    ///
     /// let config = ConfigurationBuilder::apply_default()
     ///     .apply_config_file()
     ///     .apply_env()
     ///     .apply_command_line()
     ///     .build();
     ///
-    /// let value: usize = config.get("gateway.max_events_chunk_size", "should have
-    /// max_events_chunk_size").into();
+    /// let value: usize = config.get("gateway.max_events_chunk_size").into();
     /// ```
     pub fn get(&self, path: &str) -> ParamValue {
         self.configuration.get(path).expect(&format!("{path} should be configured")).to_owned()
