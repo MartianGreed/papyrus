@@ -3,11 +3,12 @@ use std::net::{SocketAddr, TcpListener};
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::Router;
+use papyrus_config::{Config, Configurable, ConfigurationBuilder};
 use papyrus_storage::{table_names, test_utils};
 use serde_json::{json, Value};
 use tower::ServiceExt;
 
-use crate::{app, MONITORING_PREFIX};
+use crate::{app, MonitoringGatewayConfig, MONITORING_PREFIX};
 
 const TEST_CONFIG_REPRESENTATION: &str = "general_config_representation";
 const TEST_VERSION: &str = "1.2.3-dev";
@@ -16,6 +17,23 @@ const TEST_VERSION: &str = "1.2.3-dev";
 fn setup_app() -> Router {
     let (storage_reader, _) = test_utils::get_test_storage();
     app(storage_reader, TEST_VERSION, serde_json::to_value(TEST_CONFIG_REPRESENTATION).unwrap())
+}
+
+#[test]
+fn test_config() {
+    let config = get_built_configuration();
+
+    let monitoring_gateway_config = MonitoringGatewayConfig::new(&config);
+
+    assert_eq!("0.0.0.0:8081", &monitoring_gateway_config.server_address);
+}
+
+fn get_built_configuration() -> Config {
+    ConfigurationBuilder::apply_default()
+        .apply_config_file()
+        .apply_env()
+        .apply_command_line()
+        .build()
 }
 
 #[tokio::test]

@@ -9,6 +9,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
+use papyrus_config::{Configurable, ParamMetadata, ParamValue};
 use papyrus_storage::{DbTablesStats, StorageError, StorageReader};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, instrument};
@@ -18,6 +19,28 @@ const MONITORING_PREFIX: &str = "monitoring";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MonitoringGatewayConfig {
     pub server_address: String,
+}
+
+impl Configurable for MonitoringGatewayConfig {
+    fn new(built: &papyrus_config::Config) -> Self {
+        Self { server_address: built.get("monitoring_gateway.server_address").into() }
+    }
+
+    fn dump(
+        &self,
+    ) -> Vec<(papyrus_config::ParamPath, papyrus_config::ParamValue, papyrus_config::ParamMetadata)>
+    {
+        vec![(
+            "monitoring_gateway.server_address".to_owned(),
+            ParamValue::String(self.server_address.clone()),
+            ParamMetadata::new(
+                "--monitoring-gateway-server-address".to_owned(),
+                None,
+                "Monitoring gateway server address".to_owned(),
+                Some(ParamValue::String(String::from("0.0.0.0:8081"))),
+            ),
+        )]
+    }
 }
 
 impl Display for MonitoringGatewayConfig {

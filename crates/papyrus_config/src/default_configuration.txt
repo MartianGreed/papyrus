@@ -1,0 +1,43 @@
+// This file is used for:
+// 1. default configuration for the node
+// 2. reference for the users
+
+// The user should not edit this file.
+// A config file should be in a different file and contain only the parameters that the user wish to override.
+
+// The plan is to use the 'dump' function of the components to create this file, and we are OK with editing it manually afterwards.
+
+/// ChainID
+chain_id = SN_MAIN
+/// LogLevel
+log_level = INFO
+
+/// Gateway
+gateway.chain_id = ${chain_id}
+gateway.server_address = 0.0.0.0:8000
+gateway.max_events_chunk_size = 1000
+gateway.max_events_keys = 10
+
+/// Central
+central.concurrent_requests = 100
+central.url = https://alpha-mainnet.starknet.io/
+central.http_headers = {}
+central.retry_base_millis = 30
+central.retry_max_delay_millis = 30000
+central.max_retries = 10
+
+
+/// Monitoring Gateway
+monitoring_gateway.server_address = 0.0.0.0:8081
+
+/// Storage
+storage.db.path = ./data
+storage.db.min_size = 1048576 
+storage.db.max_size = 1099511627776
+storage.db.growth_step = 67108864
+
+/// Sync
+sync.block_propagation_sleep_duration_secs = 10
+sync.recoverable_error_sleep_duration_secs = 10
+sync.blocks_max_stream_size = 1000
+sync.state_updates_max_stream_size = 1000

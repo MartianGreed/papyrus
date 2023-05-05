@@ -9,6 +9,7 @@ use futures_util::StreamExt;
 use indexmap::IndexMap;
 #[cfg(test)]
 use mockall::automock;
+use papyrus_config::{Configurable, ParamMetadata, ParamValue};
 use papyrus_storage::state::StateStorageReader;
 use papyrus_storage::{StorageError, StorageReader};
 use serde::{Deserialize, Serialize};
@@ -34,10 +35,94 @@ pub struct CentralSourceConfig {
     pub http_headers: Option<HashMap<String, String>>,
     pub retry_config: RetryConfig,
 }
+
 pub struct GenericCentralSource<TStarknetClient: StarknetClientTrait + Send + Sync> {
     pub concurrent_requests: usize,
     pub starknet_client: Arc<TStarknetClient>,
     pub storage_reader: StorageReader,
+}
+
+impl Configurable for CentralSourceConfig {
+    fn new(built: &papyrus_config::Config) -> Self {
+        Self {
+            concurrent_requests: built.get("central.concurrent_requests").into(),
+            url: built.get("central.url").into(),
+            http_headers: built.get("central.http_headers").into(),
+            retry_config: RetryConfig {
+                retry_base_millis: built.get("central.retry_base_millis").into(),
+                retry_max_delay_millis: built.get("central.retry_max_delay_millis").into(),
+                max_retries: built.get("central.max_retries").into(),
+            },
+        }
+    }
+
+    fn dump(
+        &self,
+    ) -> Vec<(papyrus_config::ParamPath, papyrus_config::ParamValue, papyrus_config::ParamMetadata)>
+    {
+        vec![
+            (
+                "central.concurrent_requests".to_owned(),
+                ParamValue::String(self.concurrent_requests.to_string()),
+                ParamMetadata::new(
+                    "--concurrent-requests".to_owned(),
+                    None,
+                    "Starknet concurrent requests".to_owned(),
+                    Some(ParamValue::Usize(300)),
+                ),
+            ),
+            (
+                "central.url".to_owned(),
+                ParamValue::String(self.url.clone()),
+                ParamMetadata::new(
+                    "--central-url".to_owned(),
+                    None,
+                    "Central source url".to_owned(),
+                    Some(ParamValue::String(String::from("https://alpha-mainnet.starknet.io/"))),
+                ),
+            ),
+            (
+                "central.http_headers".to_owned(),
+                ParamValue::OptionnalStringToStringHashMap(self.http_headers.clone()),
+                ParamMetadata::new(
+                    "--central-http-headers".to_owned(),
+                    None,
+                    "Central http headers".to_owned(),
+                    None,
+                ),
+            ),
+            (
+                "central.retry_base_millis".to_owned(),
+                ParamValue::U64(self.retry_config.retry_base_millis),
+                ParamMetadata::new(
+                    "--central-retry-base-millis".to_owned(),
+                    None,
+                    "Central retry base in milliseconds".to_owned(),
+                    Some(ParamValue::U64(30)),
+                ),
+            ),
+            (
+                "central.retry_max_delay_millis".to_owned(),
+                ParamValue::U64(self.retry_config.retry_max_delay_millis),
+                ParamMetadata::new(
+                    "--central-retry-max-delay-millis".to_owned(),
+                    None,
+                    "Central retry max delay in milliseconds".to_owned(),
+                    Some(ParamValue::U64(30000)),
+                ),
+            ),
+            (
+                "central.max_retries".to_owned(),
+                ParamValue::Usize(self.retry_config.max_retries),
+                ParamMetadata::new(
+                    "--central-retry-max-delay-millis".to_owned(),
+                    None,
+                    "Central retry max delay in milliseconds".to_owned(),
+                    Some(ParamValue::Usize(10)),
+                ),
+            ),
+        ]
+    }
 }
 
 #[derive(Clone)]

@@ -97,7 +97,7 @@ fn load_http_headers() {
 central:
     http_headers:
         NAME_1: VALUE_1
-        NAME_2: VALUE_2 
+        NAME_2: VALUE_2
 ";
     f.write_all(yaml.as_bytes()).unwrap();
     let args = vec![

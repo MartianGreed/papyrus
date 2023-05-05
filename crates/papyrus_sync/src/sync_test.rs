@@ -1,12 +1,32 @@
 use indexmap::IndexMap;
+use papyrus_config::{Config, Configurable, ConfigurationBuilder};
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::deprecated_contract_class::ContractClass as DeprecatedContractClass;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::state::{ContractClass, StateDiff, StorageKey};
 use starknet_api::{patricia_key, stark_felt};
 
-use crate::sort_state_diff;
+use crate::{sort_state_diff, SyncConfig};
 
+#[test]
+fn test_config() {
+    let config = get_built_configuration();
+
+    let sync_config = SyncConfig::new(&config);
+
+    assert_eq!(std::time::Duration::from_secs(10), sync_config.block_propagation_sleep_duration);
+    assert_eq!(std::time::Duration::from_secs(10), sync_config.recoverable_error_sleep_duration);
+    assert_eq!(1000u32, sync_config.blocks_max_stream_size);
+    assert_eq!(1000u32, sync_config.state_updates_max_stream_size);
+}
+
+fn get_built_configuration() -> Config {
+    ConfigurationBuilder::apply_default()
+        .apply_config_file()
+        .apply_env()
+        .apply_command_line()
+        .build()
+}
 // TODO(anatg): Add a test to check that the sync calls the sort_state_diff function
 // before writing to the storage.
 #[test]

@@ -11,6 +11,7 @@ use std::time::Duration;
 use async_stream::try_stream;
 use futures_util::{pin_mut, select, Stream, StreamExt};
 use indexmap::IndexMap;
+use papyrus_config::{Configurable, ParamMetadata, ParamValue};
 use papyrus_storage::body::BodyStorageWriter;
 use papyrus_storage::header::{HeaderStorageReader, HeaderStorageWriter};
 use papyrus_storage::ommer::{OmmerStorageReader, OmmerStorageWriter};
@@ -33,6 +34,69 @@ pub struct SyncConfig {
     pub recoverable_error_sleep_duration: Duration,
     pub blocks_max_stream_size: u32,
     pub state_updates_max_stream_size: u32,
+}
+
+impl Configurable for SyncConfig {
+    fn new(built: &papyrus_config::Config) -> Self {
+        Self {
+            block_propagation_sleep_duration: built
+                .get("sync.block_propagation_sleep_duration_secs")
+                .into(),
+            recoverable_error_sleep_duration: built
+                .get("sync.recoverable_error_sleep_duration_secs")
+                .into(),
+            blocks_max_stream_size: built.get("sync.blocks_max_stream_size").into(),
+            state_updates_max_stream_size: built.get("sync.state_updates_max_stream_size").into(),
+        }
+    }
+
+    fn dump(
+        &self,
+    ) -> Vec<(papyrus_config::ParamPath, papyrus_config::ParamValue, papyrus_config::ParamMetadata)>
+    {
+        vec![
+            (
+                "sync.block_propagation_sleep_duration_secs".to_owned(),
+                ParamValue::Duration(self.block_propagation_sleep_duration.clone()),
+                ParamMetadata::new(
+                    "--sync-block-propagation-sleep-duration".to_owned(),
+                    None,
+                    "Starknet sync block propagation sleep duration in seconds".to_owned(),
+                    Some(ParamValue::Duration(Duration::from_secs(10))),
+                ),
+            ),
+            (
+                "sync.recoverable_error_sleep_duration_secs".to_owned(),
+                ParamValue::Duration(self.recoverable_error_sleep_duration.clone()),
+                ParamMetadata::new(
+                    "--sync-recoverable-error-sleep-duration".to_owned(),
+                    None,
+                    "Starknet sync recoverable error sleep duration in seconds".to_owned(),
+                    Some(ParamValue::Duration(Duration::from_secs(10))),
+                ),
+            ),
+            (
+                "sync.blocks_max_stream_size".to_owned(),
+                ParamValue::U32(self.blocks_max_stream_size.clone()),
+                ParamMetadata::new(
+                    "--sync-blocks-max-stream-size".to_owned(),
+                    None,
+                    "Starknet sync blocks max stream size".to_owned(),
+                    Some(ParamValue::U32(1000)),
+                ),
+            ),
+            (
+                "sync.state_updates_max_stream_size".to_owned(),
+                ParamValue::U32(self.state_updates_max_stream_size.clone()),
+                ParamMetadata::new(
+                    "--sync-state-updates-max-stream-size".to_owned(),
+                    None,
+                    "Starknet sync state updates max stream size".to_owned(),
+                    Some(ParamValue::U32(1000)),
+                ),
+            ),
+        ]
+    }
 }
 
 // Orchestrates specific network interfaces (e.g. central, p2p, l1) and writes to Storage.

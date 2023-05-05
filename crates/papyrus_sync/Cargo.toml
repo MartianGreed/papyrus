@@ -13,6 +13,7 @@ hex.workspace = true
 indexmap = { workspace = true, features = ["serde"] }
 libmdbx = { workspace = true, features = ["lifetimed-bytes"] }
 papyrus_storage = { path = "../papyrus_storage" }
+papyrus_config = { path = "../papyrus_config" }
 reqwest = { workspace = true, features = ["json", "blocking"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
